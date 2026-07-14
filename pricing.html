@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pricing & Experimentation</title>
+  <title>Pricing & Experimentation Lab — Felipe Manzi</title>
+  <meta name="description" content="Interactive tools for experiment design and causal inference: sample size calculator, p-value simulator, power curves, and more." />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="pricing.css" />
 </head>
 
 <body>
@@ -23,59 +25,143 @@
 
   <section>
     <h2>Pricing & Experimentation Lab</h2>
+    <p class="lab-subtitle">Interactive tools for experiment design and causal inference.</p>
 
     <p>
-      This space is a personal exploration of pricing strategies,
-      experimentation methods, and decision-making under uncertainty.
-      Pricing is treated as an inference problem: every price represents
-      a hypothesis about customer behavior.
-    </p>
-
-    <p>
-      Here I experiment with statistical and economic methods used to
-      measure demand, evaluate interventions, and optimize business outcomes.
+      Pricing is an inference problem: every price is a hypothesis about
+      customer behavior, and every experiment is a way to test it. This lab
+      collects small interactive tools I use to reason about experiment
+      design — the kind of quick sanity-checks a Growth or Pricing team runs
+      before, during, and after a test.
     </p>
   </section>
 
-  <section>
-    <h3>Topics Explored</h3>
-
-    <ul>
-      <li>A/B Testing and Experimental Design</li>
-      <li>Price Elasticity Estimation</li>
-      <li>Causal Inference for Product Decisions</li>
-      <li>Revenue vs Conversion Trade-offs</li>
-      <li>Marketplace Pricing Dynamics</li>
-    </ul>
-  </section>
-
-  <section>
-    <h3>Methods & Techniques</h3>
-
-    <ul>
-      <li>Randomized Controlled Experiments (RCTs)</li>
-      <li>Difference-in-Differences</li>
-      <li>Regression Discontinuity Design</li>
-      <li>Bayesian Experimentation</li>
-      <li>Simulation-Based Pricing Models</li>
-    </ul>
-  </section>
-
-  <section>
-    <h3>Work in Progress</h3>
-
+  <section id="sample-size">
+    <h3>Sample Size Calculator</h3>
     <p>
-      Upcoming projects include pricing simulations, experimentation notebooks,
-      and applied studies connecting economic intuition with real-world product
-      decisions.
+      Before running an A/B test, you need to know how many users you need
+      to reliably detect the effect you care about. Too small a sample and
+      you'll miss real effects or chase noise; too large and you waste time
+      and traffic. This calculator tells you the minimum sample size for a
+      given baseline rate, effect size, and confidence requirements.
+    </p>
+
+    <div class="tool-card">
+      <div class="controls">
+        <div class="control">
+          <label for="baseline-rate-number">Baseline conversion rate (%)</label>
+          <div class="slider-row">
+            <input type="range" id="baseline-rate-range" min="0.5" max="50" step="0.1" value="5" />
+            <input type="number" id="baseline-rate-number" min="0.5" max="50" step="0.1" value="5" />
+          </div>
+        </div>
+
+        <div class="control">
+          <label for="mde-number">Minimum Detectable Effect</label>
+          <div class="slider-row">
+            <input type="range" id="mde-range" min="1" max="100" step="1" value="10" />
+            <input type="number" id="mde-number" min="1" max="100" step="1" value="10" />
+          </div>
+        </div>
+
+        <div class="control">
+          <label for="mde-type">MDE type</label>
+          <select id="mde-type">
+            <option value="relative" selected>Relative lift (%)</option>
+            <option value="absolute">Absolute (pp)</option>
+          </select>
+        </div>
+
+        <div class="control">
+          <label for="alpha-select">Significance level (α)</label>
+          <select id="alpha-select">
+            <option value="0.01">1%</option>
+            <option value="0.05" selected>5%</option>
+            <option value="0.10">10%</option>
+          </select>
+        </div>
+
+        <div class="control">
+          <label for="power-select">Statistical power (1-β)</label>
+          <select id="power-select">
+            <option value="0.80" selected>80%</option>
+            <option value="0.90">90%</option>
+            <option value="0.95">95%</option>
+          </select>
+        </div>
+
+        <div class="control control-checkbox">
+          <input type="checkbox" id="one-tailed" />
+          <label for="one-tailed">One-tailed test</label>
+        </div>
+
+        <div class="control">
+          <label for="daily-traffic">Daily users (both groups combined)</label>
+          <input type="number" id="daily-traffic" min="0" step="100" value="1000" />
+        </div>
+      </div>
+
+      <p id="sample-size-error" class="so-what" style="display:none"></p>
+
+      <div class="outputs">
+        <div class="output">
+          <span class="output-number" id="n-per-group">—</span>
+          <span class="output-label">sample size per group</span>
+        </div>
+        <div class="output">
+          <span class="output-number" id="n-total">—</span>
+          <span class="output-label">total sample size</span>
+        </div>
+        <div class="output">
+          <span class="output-number" id="duration-estimate">—</span>
+          <span class="output-label">estimated test duration</span>
+        </div>
+      </div>
+
+      <div class="chart-wrap">
+        <canvas id="sample-size-canvas"></canvas>
+      </div>
+      <div class="chart-legend">
+        <span><span class="swatch" style="background:rgba(230,237,243,0.55)"></span>Null (no effect)</span>
+        <span><span class="swatch" style="background:#1D9E75"></span>Alternative (true effect)</span>
+        <span><span class="swatch" style="background:rgba(229,83,75,0.6)"></span>α — false positive risk</span>
+        <span><span class="swatch" style="background:rgba(210,153,34,0.6)"></span>β — missed detection risk</span>
+      </div>
+    </div>
+
+    <p class="so-what">
+      <strong>So what?</strong> This is the number to check before you launch
+      — not after. If the required sample size means the test would run for
+      months, it's a sign to either accept a larger MDE, split traffic less
+      evenly, or rethink whether an A/B test is the right tool for this
+      decision at all.
     </p>
   </section>
+
+  <section id="p-value">
+    <h3>P-value Simulator</h3>
+    <div class="tool-card coming-soon">Coming soon.</div>
+  </section>
+
+  <section id="power-curve">
+    <h3>Power Curve Visualizer</h3>
+    <div class="tool-card coming-soon">Coming soon.</div>
+  </section>
+
+  <section id="multiple-testing">
+    <h3>Multiple Testing / False Discovery Rate Demo</h3>
+    <div class="tool-card coming-soon">Coming soon.</div>
+  </section>
+
+  <p class="back-link"><a href="index.html">← Back to Felipe Manzi</a></p>
 
 </main>
 
 <footer>
   <p>© 2026 Felipe Manzi</p>
 </footer>
+
+<script src="pricing.js"></script>
 
 </body>
 </html>
